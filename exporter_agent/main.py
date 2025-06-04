@@ -16,9 +16,9 @@ class ExporterAgent:
         
     
     """
-    def __init__(self, name: str, file_path: str = "/tmp/exported_data.json", export_format: str = "json"):
+    def __init__(self, name: str, export_path: str = "/tmp/exported_data.json", export_format: str = "json"):
         self.name = name
-        self.file_path = file_path  # Default path for exported data
+        self.file_path = export_path  # Default path for exported data
         self.export_format = export_format   # supports "json", "csv", "txt"
         
     def export_data(self, data):

@@ -151,8 +151,8 @@ config = {
 inspector = DatabaseInspector(config)
 database_summary = inspector.inspect_database()
 
-exporter_agent = ExporterAgent(name="DatabaseSummaryExporter")
-response = exporter_agent.export_data(data=database_summary, export_format="json", export_path="summary/database_summary.json")
+exporter_agent = ExporterAgent(name="DatabaseSummaryExporter", export_format="json", export_path="summary/database_summary.json")
+response = exporter_agent.export_data(data=database_summary)
 if response["status"] == "success":
     print(f"Database summary exported successfully to: {response['message']}")
 else:
