@@ -1,5 +1,5 @@
 import pandas as pd
-
+import numpy as np
 class ExporterAgent:
     """
     Description:
@@ -20,7 +20,9 @@ class ExporterAgent:
         self.name = name
         self.file_path = export_path  # Default path for exported data
         self.export_format = export_format   # supports "json", "csv", "txt"
-        
+    
+
+    
     def export_data(self, data):
         """
         Export data to a file in the specified format.
@@ -30,19 +32,30 @@ class ExporterAgent:
         try:
             with open(self.file_path, 'w') as file:
                 if self.export_format == "json":
-                    json.dump(data, file, indent=4)
+                    if isinstance(data, pd.DataFrame):
+                        data.to_json(file, orient='records', lines=True)
+                    elif isinstance(data, pd.Series):
+                        data.to_json(file, orient='records', lines=True)
+                    else:
+                        json.dump(data, file, indent=4)
                 elif self.export_format == "csv":
                     df = pd.DataFrame(data)
                     df.to_csv(file, index=False)
                 elif self.export_format == "txt":
                     with open(self.file_path, 'w') as file:
-                        for item in data:
-                            file.write(f"{item}\n")
+                        if isinstance(data, pd.DataFrame):
+                            data.to_string(file)
+                        elif isinstance(data, pd.Series):
+                            data.to_string(file)
+                        else:
+                            file.write(str(data))
                 else:
                     raise ValueError("Unsupported export format")
             print(f"Data exported successfully to {self.file_path}")
+            return {"status": "success", "message": f"Data exported to {self.file_path}"}
         except Exception as e:
             print(f"An error occurred while exporting data: {e}")
+            return {"status": "error", "message": str(e)}
 
     def set_export_format(self, format: str):
         """
