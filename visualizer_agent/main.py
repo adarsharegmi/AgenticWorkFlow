@@ -24,7 +24,8 @@ class SQLVisualizerAgent:
         ax.table(cellText=df.values, colLabels=df.columns, loc='center', cellLoc='center', colLoc='center')
         plt.title(title)
         plt.show()
-
+        plt.savefig(f"{title}.png", bbox_inches='tight', dpi=300)
+    
     def visualize_table(self, table_name):
         """
         Fetch the table from the database and visualize it.

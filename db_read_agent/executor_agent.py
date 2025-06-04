@@ -24,6 +24,27 @@ class SQLAgent:
             self.connection.close()
             self.connection = None
 
+    def execute_sql(self, query):
+        """
+        Execute a SQL query and return the results as a pandas DataFrame.
+
+        :param query: SQL query string to be executed.
+        :return: DataFrame containing the results of the query.
+        """
+        try:
+            self.connect()
+            with self.connection.cursor() as cursor:
+                cursor.execute(query)
+                rows = cursor.fetchall()
+                columns = [desc[0] for desc in cursor.description]
+            return pd.DataFrame(rows, columns=columns)
+        except mysql.connector.Error as err:
+            raise Exception(f"MySQL Error: {err}")
+        except Exception as e:
+            raise Exception(f"Error executing SQL query: {str(e)}")
+        finally:
+            self.disconnect()
+            
     def execute_task(self, task):
         """
         Execute a given task using the predefined SQL queries.
@@ -72,7 +93,7 @@ class SQLAgent:
 
                 return {"status": "success", "query": query, "message": f"Data exported to {export_path}", "data": df}
 
-            return {"status": "success", "query": query, "data": df}
+            return {"status": "success", "query": query, "data": df, "message": "Query executed successfully"}
 
         except mysql.connector.Error as err:
             return {"status": "error", "message": f"MySQL Error: {err}"}

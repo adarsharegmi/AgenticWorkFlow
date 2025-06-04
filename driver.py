@@ -1,8 +1,12 @@
 from db_read_agent.executor_agent import SQLAgent
+from standardize_agent.main import DataFrameAgent
 from ui_agent import SQLVisualizerAgentUI
 from visualizer_agent import SQLVisualizerAgent
+from db_inspector import DatabaseInspector
+from exporter_agent import ExporterAgent
 
 import os
+
 from dotenv import load_dotenv
 load_dotenv()  # Load environment variables from .env file
 
@@ -20,11 +24,9 @@ def parse_input(input_str):
     This function can be modified to handle different input formats if needed.
 
     table name detect column name, operation and so on
-
     """
-    found_data = {
+    found_data = {}
 
-    }
     # first search for task type in the prompt
     input_str = input_str.lower().strip()
     if "group by" in input_str:
@@ -42,7 +44,7 @@ def parse_input(input_str):
     else:
         found_data["operation"] = "group_by_count"
 
-    #extract table name and column name if present
+    # Extract table name and column name if present
     if "from" in input_str:
         table_name_start = input_str.find("from") + 4
         table_name_end = input_str.find(" ", table_name_start)
@@ -61,7 +63,6 @@ def parse_input(input_str):
         found_data["group_column"] = input_str[group_column_start:group_column_end].strip()
     else:
         found_data["group_column"] = "code"
-
 
     if "where" in input_str:
         condition_start = input_str.find("where") + 5
@@ -103,7 +104,7 @@ def parse_input(input_str):
     return found_data 
 
 
-def generate_task(type="group_by_count", table_name="booking_origins", column_name="code",
+def generate_task(type="select_with_condition", table_name="booking_origins", column_name="code",
                   sort_by="count", sort_order="desc", limit=10, condition="code IS NOT NULL"):
     """
     Generate a task for the SQLAgent to execute.
@@ -133,10 +134,9 @@ task = {
         "sort_by": "count",
         "sort_order": "desc",
         "limit": 10,
-        "condition": "code IS NOT NULL",
         "export_data": True,
-        "export_format": "csv",
-        "export_path": "summary/booking_origins_grouped.csv"
+        "export_format": "json",
+        "export_path": "summary/booking_origins_grouped.json"
     }
 }
 
@@ -147,28 +147,48 @@ config = {
     "database": os.environ.get("DB_NAME", "mysql") 
 }
 
-#  tried to take input from user in progress
-# task_type = parse_input(take_input("Enter the task type (e.g., group by, describe, select): "))
 
-# task = generate_task(task_type)
+inspector = DatabaseInspector(config)
+database_summary = inspector.inspect_database()
 
-# verify task by showing to user and ask to further proceed
-print(f"Generated task: {task}")
-if take_input("Do you want to proceed with this task? : ").lower() == "N":
-    print("Task execution cancelled.")
-    exit()
-
-
-agent = SQLAgent(config)
-response = agent.execute_task(task)
-
+exporter_agent = ExporterAgent(name="DatabaseSummaryExporter")
+response = exporter_agent.export_data(data=database_summary, export_format="json", export_path="summary/database_summary.json")
 if response["status"] == "success":
-    print(f"Task executed successfully. Data exported to: {response['message']}")
-    visualizer_ui = SQLVisualizerAgentUI(agent)
-    visualizer_ui.display_table_in_ui(response["data"])
+    print(f"Database summary exported successfully to: {response['message']}")
 else:
-    print(f"Error: {response['message']}")
+    print(f"Error exporting database summary: {response['message']}")
+
+
+
+# from db_read_agent.executor_agent import SQLAgent
+# Show summary
+# for table, summary in database_summary.items():
+#     print(f"\nTable: {table}")
+#     print(f"Valid Columns (more than 50% non-null values):")
+#     for col, valid_percentage in summary['valid_columns'].items():
+#         print(f"  - {col}: {valid_percentage}% valid")
 
 
 
 
+# agent = SQLAgent(config)
+# response = agent.execute_task(task)
+
+# if response["status"] == "success":
+#     print(f"Task executed successfully. Data exported to: {response['message']}")
+#     agent = DataFrameAgent(dataframe=response["data"])
+
+#     # Data Processing (e.g., handling missing data, duplicates, etc.)
+#     agent.remove_duplicates()
+#     agent.filter_columns_by_valid_data()
+
+#     # View the processed dataframe
+#     processed_df = agent.get_dataframe()
+
+#     print(processed_df.head())
+
+#     # Visualize using UI
+#     visualizer_ui = SQLVisualizerAgentUI(agent)
+#     visualizer_ui.display_table_in_ui(processed_df)  # Display processed DataFrame in UI
+# else:
+#     print(f"Error: {response['message']}")

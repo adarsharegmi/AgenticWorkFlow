@@ -1,0 +1,1 @@
+from db_inspector.main import DatabaseInspector
