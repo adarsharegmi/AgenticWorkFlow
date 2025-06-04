@@ -1,4 +1,3 @@
-from connect import connect_to_database
 from db_read_agent.executor_agent import SQLAgent
 from ui_agent import SQLVisualizerAgentUI
 from visualizer_agent import SQLVisualizerAgent
